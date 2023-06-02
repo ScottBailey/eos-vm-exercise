@@ -5,6 +5,7 @@
 
 
 
+
 // needed because CDT is stupid
 template <typename T, std::size_t Align = alignof(T)>
 using legacy_span = eosio::vm::argument_proxy<eosio::vm::span<T>, Align>;
@@ -22,14 +23,25 @@ struct base_host_functions {
          throw 0;  // Why zero?
       }
    }
-
 };
 
 
 struct host_functions : public base_host_functions {
+
    void print_hello() {
       std::cout << "Hello, world!" << std::endl;
    }
+
+   void host_exit(uint32_t return_value) {
+      static_assert(sizeof(int) >= sizeof(uint32_t), "int is too small to contain return value.");
+      std::exit(return_value);
+   }
+
+   void print_string(const char* str, uint32_t sz) {
+      static_assert(sizeof(size_t) >= sizeof(uint32_t), "size_t is too small to contain uint32_t sz.");
+      fwrite(str, sizeof(char), sz, stdout);
+   }
+
 };
 
 
@@ -48,7 +60,8 @@ int main(int argc, char** argv) {
    using backend_t = eosio::vm::backend<rhf_t>;
 
    rhf_t::add<&host_functions::print_hello>("env", "print_hello");
-   //rhf_t::add<&host_functions::print_number>("env", "print_number");
+   rhf_t::add<&host_functions::host_exit>("env", "host_exit");
+   rhf_t::add<&host_functions::print_string>("env", "print_string");
 
    // once again needed because of CDT
    rhf_t::add<&host_functions::eosio_assert>("env", "eosio_assert");

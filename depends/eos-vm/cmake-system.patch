@@ -1,0 +1,18 @@
+diff --git a/CMakeLists.txt b/CMakeLists.txt
+index b7dead1..8c93214 100644
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -54,7 +54,7 @@ include(EosVMBuildUtils)
+ # Create the eos-vm library.
+ # ##################################################################################################
+ add_library(eos-vm INTERFACE)
+-target_include_directories(eos-vm
++target_include_directories(eos-vm SYSTEM
+                            INTERFACE ${CMAKE_CURRENT_SOURCE_DIR}/include
+                                      ${CMAKE_CURRENT_SOURCE_DIR}/external/softfloat/source/include)
+ # ignore the C++17 register warning until clean up
+@@ -148,4 +148,3 @@ if(ENABLE_INSTALL)
+       DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
+       ${INSTALL_DIRECTORY_COMPONENT_ARGS})
+ endif()
+-

@@ -3,6 +3,7 @@
 #include <eosio/vm/host_function.hpp>
 #include <eosio/vm/watchdog.hpp>
 
+#include <filesystem>
 
 
 
@@ -77,20 +78,24 @@ int main(int argc, char** argv) {
       return -1;
    }
 
-   std::vector<uint8_t> wasm_bytes;
+   std::filesystem::path wasm_path(argv[1]);
 
-   std::ifstream wasm_file(argv[1], std::ios::binary);
+   std::error_code sec;
+   auto sz = std::filesystem::file_size(wasm_path,sec);
+   if(sec) {
+      std::cerr << sec << "\n";
+      return 1;
+   }
+
+   std::vector<uint8_t> wasm_bytes;
+   wasm_bytes.resize(sz);
+
+   std::ifstream wasm_file(wasm_path, std::ios::binary);
    if (!wasm_file) {
       std::cerr << "Unable to open wasm file." << std::endl;
       return -1;
    }
-
-   wasm_file.seekg(0, std::ios::end);
-   std::size_t sz = wasm_file.tellg();
-   wasm_file.seekg(0, std::ios::beg);
-
-   wasm_bytes.resize(sz);
-   wasm_file.read((char*)wasm_bytes.data(), sz);
+   wasm_file.read(reinterpret_cast<char*>(wasm_bytes.data()), sz);
 
    try {
       host_functions hf;

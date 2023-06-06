@@ -6,7 +6,7 @@
 #include <filesystem>
 
 #include <static_analysis_visitor.hpp>
-//#include <driver/static_analysis_visitor.hpp>
+#include <debug_interpret_visitor.hpp>
 
 
 // needed because CDT is stupid
@@ -59,6 +59,7 @@ struct cnv : eosio::vm::type_converter<host_functions> {
 
 int main(int argc, char** argv) {
 
+   const bool do_debug = true;
    const bool do_static_analysis = true;
 
    if (argc < 2) {
@@ -108,7 +109,10 @@ int main(int argc, char** argv) {
       host_functions hf;
       backend_t bkend(wasm_bytes, hf, &wa);
 
-      bkend(hf, "env", "apply", (uint64_t)0, (uint64_t)0, (uint64_t)0);
+      if(do_debug)
+         bkend.call_with_interpreter<debug_interpret_visitor<typename backend_t::context_t>>("env", "apply", (uint64_t)0, (uint64_t)0, (uint64_t)0);
+      else
+         bkend(hf, "env", "apply", (uint64_t)0, (uint64_t)0, (uint64_t)0);
 
       if(do_static_analysis) {
          static_analysis sa;
@@ -116,7 +120,7 @@ int main(int argc, char** argv) {
             const auto& body = bkend.get_module().code[i];
 
             for (std::size_t j=0; j < body.size; ++j) {
-               visit(sa, body.code[j]);
+                  visit(sa, body.code[j]);
             }
          }
          std::cout << wasm_path << ": op count: " << sa.count() << std::endl;

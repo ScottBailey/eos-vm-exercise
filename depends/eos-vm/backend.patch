@@ -1,0 +1,29 @@
+diff --git a/include/eosio/vm/backend.hpp b/include/eosio/vm/backend.hpp
+index 54a7e26..a1e4f1c 100644
+--- a/include/eosio/vm/backend.hpp
++++ b/include/eosio/vm/backend.hpp
+@@ -60,9 +60,11 @@ namespace eosio { namespace vm {
+ 
+    template <typename HostFunctions = std::nullptr_t, typename Impl = interpreter, typename Options = default_options, typename DebugInfo = null_debug_info>
+    class backend {
++    public:
+       using host_t     = detail::host_type_t<HostFunctions>;
+       using context_t  = typename Impl::template context<HostFunctions>;
+       using parser_t   = typename Impl::template parser<HostFunctions, Options, DebugInfo>;
++    private:
+       void construct(host_t* host=nullptr) {
+          mod.finalize();
+          ctx.set_wasm_allocator(memory_alloc);
+@@ -174,6 +176,12 @@ namespace eosio { namespace vm {
+          return true;
+       }
+ 
++      template <typename INTERPRETER, typename... Args>
++      inline bool call_with_interpreter(const std::string_view& mod, const std::string_view& func, Args... args) {
++         ctx.execute(nullptr, INTERPRETER(ctx), func, args...);
++         return true;
++      }
++
+       template <typename... Args>
+       inline auto call_with_return(host_t& host, const std::string_view& mod, const std::string_view& func, Args... args ) {
+          if constexpr (eos_vm_debug) {

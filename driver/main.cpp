@@ -5,6 +5,8 @@
 
 #include <filesystem>
 
+#include <static_analysis_visitor.hpp>
+//#include <driver/static_analysis_visitor.hpp>
 
 
 // needed because CDT is stupid
@@ -56,6 +58,17 @@ struct cnv : eosio::vm::type_converter<host_functions> {
 
 
 int main(int argc, char** argv) {
+
+   const bool do_static_analysis = true;
+
+   if (argc < 2) {
+      std::cerr << "Please provide a wasm file." << std::endl;
+      return -1;
+   }
+
+   std::filesystem::path wasm_path(argv[1]);
+
+
    eosio::vm::wasm_allocator wa;
    using rhf_t = eosio::vm::registered_host_functions<host_functions, eosio::vm::execution_interface, cnv>;
    using backend_t = eosio::vm::backend<rhf_t>;
@@ -73,12 +86,6 @@ int main(int argc, char** argv) {
    rhf_t::add<&host_functions::get_active_producers>("env", "get_active_producers");
    rhf_t::add<&host_functions::prints_l>("env", "prints_l");
 
-   if (argc < 2) {
-      std::cerr << "Please provide a wasm file." << std::endl;
-      return -1;
-   }
-
-   std::filesystem::path wasm_path(argv[1]);
 
    std::error_code sec;
    auto sz = std::filesystem::file_size(wasm_path,sec);
@@ -102,6 +109,19 @@ int main(int argc, char** argv) {
       backend_t bkend(wasm_bytes, hf, &wa);
 
       bkend(hf, "env", "apply", (uint64_t)0, (uint64_t)0, (uint64_t)0);
+
+      if(do_static_analysis) {
+         static_analysis sa;
+         for(std::size_t i=0; i < bkend.get_module().code.size(); ++i) {
+            const auto& body = bkend.get_module().code[i];
+
+            for (std::size_t j=0; j < body.size; ++j) {
+               visit(sa, body.code[j]);
+            }
+         }
+         std::cout << wasm_path << ": op count: " << sa.count() << std::endl;
+      }
+
    } catch (const eosio::vm::exception& ex) {
       std::cerr << ex.detail() << std::endl;
       return -1;

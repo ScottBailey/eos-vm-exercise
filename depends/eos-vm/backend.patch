@@ -1,5 +1,5 @@
 diff --git a/include/eosio/vm/backend.hpp b/include/eosio/vm/backend.hpp
-index 54a7e26..a1e4f1c 100644
+index 54a7e26..6d78f8c 100644
 --- a/include/eosio/vm/backend.hpp
 +++ b/include/eosio/vm/backend.hpp
 @@ -60,9 +60,11 @@ namespace eosio { namespace vm {
@@ -14,13 +14,19 @@ index 54a7e26..a1e4f1c 100644
        void construct(host_t* host=nullptr) {
           mod.finalize();
           ctx.set_wasm_allocator(memory_alloc);
-@@ -174,6 +176,12 @@ namespace eosio { namespace vm {
+@@ -174,6 +176,18 @@ namespace eosio { namespace vm {
           return true;
        }
  
 +      template <typename INTERPRETER, typename... Args>
 +      inline bool call_with_interpreter(const std::string_view& mod, const std::string_view& func, Args... args) {
 +         ctx.execute(nullptr, INTERPRETER(ctx), func, args...);
++         return true;
++      }
++
++      template <typename INTERPRETER, typename... Args>
++      inline bool call_with_interpreter(INTERPRETER& interpreter, const std::string_view& mod, const std::string_view& func, Args... args) {
++         ctx.execute(nullptr, interpreter, func, args...);
 +         return true;
 +      }
 +

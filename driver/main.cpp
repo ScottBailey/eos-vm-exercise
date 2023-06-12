@@ -7,6 +7,7 @@
 
 #include <static_analysis_visitor.hpp>
 #include <debug_interpret_visitor.hpp>
+#include <counting_visitor.hpp>
 
 
 // needed because CDT is stupid
@@ -59,8 +60,9 @@ struct cnv : eosio::vm::type_converter<host_functions> {
 
 int main(int argc, char** argv) {
 
-   const bool do_debug = true;
-   const bool do_static_analysis = true;
+   constexpr bool do_debug = false;
+   constexpr bool do_count = true;
+   constexpr bool do_static_analysis = true;
 
    if (argc < 2) {
       std::cerr << "Please provide a wasm file." << std::endl;
@@ -111,6 +113,12 @@ int main(int argc, char** argv) {
 
       if(do_debug)
          bkend.call_with_interpreter<debug_interpret_visitor<typename backend_t::context_t>>("env", "apply", (uint64_t)0, (uint64_t)0, (uint64_t)0);
+      else if(do_count) {
+         //counting_visitor<typename backend_t::context_t> interp(bkend.get_context());
+         counting_visitor interp(bkend.get_context());
+         bkend.call_with_interpreter(interp, "env", "apply", (uint64_t)0, (uint64_t)0, (uint64_t)0);
+         interp.dump();
+      }
       else
          bkend(hf, "env", "apply", (uint64_t)0, (uint64_t)0, (uint64_t)0);
 
